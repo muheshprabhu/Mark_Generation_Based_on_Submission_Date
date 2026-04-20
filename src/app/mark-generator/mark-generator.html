@@ -1,0 +1,25 @@
+<div class="container">
+  <h1>Mark Generation</h1>
+  
+  <div class="card">
+    <!-- NEW: Assignment Due Date Input -->
+    <div class="input-group">
+      <label for="dueDate">Assignment Due Date:</label>
+      <input type="date" id="dueDate" [(ngModel)]="dueDate">
+    </div>
+
+    <!-- Submission Date Input -->
+    <div class="input-group">
+      <label for="subDate">Select Submission Date:</label>
+      <input type="date" id="subDate" [(ngModel)]="submissionDate">
+    </div>
+
+    <button (click)="generateMarks()">Calculate Final Marks</button>
+
+    <div *ngIf="finalMarks !== null" class="result">
+      <h3>Results:</h3>
+      <p>Status: <span [class.late]="finalMarks < 100">{{ status }}</span></p>
+      <p class="score">Final Mark: {{ finalMarks }} / {{ maxMarks }}</p>
+    </div>
+  </div>
+</div>

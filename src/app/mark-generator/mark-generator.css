@@ -1,0 +1,9 @@
+.container { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; text-align: center; }
+.card { border: 1px solid #ddd; padding: 20px; border-radius: 8px; max-width: 400px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+.input-group { margin: 20px 0; }
+input { padding: 10px; width: 80%; border: 1px solid #ccc; border-radius: 4px; }
+button { background-color: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; }
+button:hover { background-color: #218838; }
+.result { margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 4px; }
+.score { font-size: 24px; font-weight: bold; color: #007bff; }
+.late { color: #dc3545; font-weight: bold; }
