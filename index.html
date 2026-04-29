@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mark Generation Based on Submission Date</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary:   #2563eb;
+      --primary-h: #1d4ed8;
+      --success:   #16a34a;
+      --danger:    #dc2626;
+      --warning:   #d97706;
+      --bg:        #f1f5f9;
+      --surface:   #ffffff;
+      --border:    #e2e8f0;
+      --text:      #1e293b;
+      --muted:     #64748b;
+      --radius:    12px;
+      --shadow:    0 4px 24px rgba(0,0,0,0.08);
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 40px 16px 60px;
+      color: var(--text);
+    }
+
+    /* ── Header ─────────────────────────────────────── */
+    .page-header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    .page-header .badge {
+      display: inline-block;
+      background: #dbeafe;
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 4px 14px;
+      border-radius: 100px;
+      margin-bottom: 12px;
+    }
+    .page-header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    .page-header p {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    /* ── Card ───────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 36px 32px;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    /* ── Form fields ────────────────────────────────── */
+    .field { margin-bottom: 22px; }
+    .field label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+    .field input[type="date"],
+    .field input[type="number"] {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      color: var(--text);
+      background: #f8fafc;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+    .field input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+      background: #fff;
+    }
+
+    /* ── Button ─────────────────────────────────────── */
+    .btn {
+      width: 100%;
+      padding: 13px;
+      background: var(--primary);
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      margin-top: 6px;
+    }
+    .btn:hover  { background: var(--primary-h); }
+    .btn:active { transform: scale(0.98); }
+
+    /* ── Result panel ───────────────────────────────── */
+    .result {
+      display: none;
+      margin-top: 28px;
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+    }
+    .result.show { display: block; }
+
+    .result-header {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    .status-chip.ontime  { background: #dcfce7; color: var(--success); }
+    .status-chip.late    { background: #fee2e2; color: var(--danger); }
+    .status-chip.warning { background: #fef3c7; color: var(--warning); }
+
+    /* Mark bar */
+    .mark-bar-wrap {
+      margin-bottom: 20px;
+    }
+    .mark-bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .mark-bar-track {
+      height: 10px;
+      background: var(--border);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+    .mark-bar-fill {
+      height: 100%;
+      border-radius: 100px;
+      transition: width 0.7s cubic-bezier(0.22,1,0.36,1);
+    }
+
+    /* Score grid */
+    .score-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+    .score-box {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 10px;
+      text-align: center;
+    }
+    .score-box .val {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+      display: block;
+    }
+    .score-box .lbl {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-top: 2px;
+    }
+    .score-box.highlight .val { color: var(--primary); }
+
+    /* ── History table ──────────────────────────────── */
+    .history-section { margin-top: 32px; }
+    .history-section h3 {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th {
+      background: #f1f5f9;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 8px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f8fafc; }
+    .badge-late   { background:#fee2e2; color:var(--danger);  padding:2px 8px; border-radius:100px; font-size:11px; font-weight:600; }
+    .badge-ok     { background:#dcfce7; color:var(--success); padding:2px 8px; border-radius:100px; font-size:11px; font-weight:600; }
+
+    .clear-btn {
+      margin-top: 10px;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .clear-btn:hover { background: #f1f5f9; }
+
+    /* ── Footer ─────────────────────────────────────── */
+    .footer {
+      margin-top: 32px;
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 520px) {
+      .card { padding: 24px 18px; }
+      .page-header h1 { font-size: 1.5rem; }
+      .score-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="badge">Academic Tool</div>
+  <h1>Mark Generation</h1>
+  <p>Calculate final marks based on submission date vs due date</p>
+</div>
+
+<div class="card">
+
+  <!-- Form -->
+  <div class="field">
+    <label for="dueDate">Assignment Due Date</label>
+    <input type="date" id="dueDate" />
+  </div>
+
+  <div class="field">
+    <label for="subDate">Submission Date</label>
+    <input type="date" id="subDate" />
+  </div>
+
+  <div class="field">
+    <label for="maxMarks">Maximum Marks</label>
+    <input type="number" id="maxMarks" value="100" min="1" max="1000" />
+  </div>
+
+  <div class="field">
+    <label for="penalty">Penalty per Late Day (marks)</label>
+    <input type="number" id="penalty" value="10" min="1" max="100" />
+  </div>
+
+  <button class="btn" onclick="calculate()">Calculate Final Marks</button>
+
+  <!-- Result -->
+  <div class="result" id="result">
+    <div class="result-header">Result</div>
+
+    <div id="statusChip" class="status-chip"></div>
+
+    <div class="mark-bar-wrap">
+      <div class="mark-bar-label">
+        <span>0</span>
+        <span id="barLabel"></span>
+      </div>
+      <div class="mark-bar-track">
+        <div class="mark-bar-fill" id="markBar" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="score-grid">
+      <div class="score-box">
+        <span class="val" id="lateDays">—</span>
+        <span class="lbl">Days Late</span>
+      </div>
+      <div class="score-box">
+        <span class="val" id="penalty-deducted">—</span>
+        <span class="lbl">Deducted</span>
+      </div>
+      <div class="score-box highlight">
+        <span class="val" id="finalMark">—</span>
+        <span class="lbl">Final Mark</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="history-section" id="historySection" style="display:none">
+    <h3>Calculation History</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Due Date</th>
+          <th>Submitted</th>
+          <th>Days Late</th>
+          <th>Mark</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="historyBody"></tbody>
+    </table>
+    <button class="clear-btn" onclick="clearHistory()">Clear History</button>
+  </div>
+
+</div>
+
+<div class="footer">
+  Mark Generation Based on Submission Date &nbsp;·&nbsp; Mepco Schlenk Engineering College
+</div>
+
+<script>
+  let history = [];
+
+  function calculate() {
+    const dueVal = document.getElementById('dueDate').value;
+    const subVal = document.getElementById('subDate').value;
+    const maxMarks = parseInt(document.getElementById('maxMarks').value) || 100;
+    const penaltyPerDay = parseInt(document.getElementById('penalty').value) || 10;
+
+    if (!dueVal || !subVal) {
+      alert('Please select both Due Date and Submission Date.');
+      return;
+    }
+
+    const due = new Date(dueVal);
+    const sub = new Date(subVal);
+    const diffTime = sub - due;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    let finalMark, statusText, chipClass, barColor;
+
+    if (diffDays <= 0) {
+      finalMark   = maxMarks;
+      const earlyDays = Math.abs(diffDays);
+      statusText  = earlyDays > 0 ? `Submitted ${earlyDays} day(s) early 🎉` : 'Submitted On Time ✓';
+      chipClass   = 'ontime';
+      barColor    = '#16a34a';
+    } else {
+      const deducted = diffDays * penaltyPerDay;
+      finalMark   = Math.max(0, maxMarks - deducted);
+      statusText  = `Late by ${diffDays} day(s) — ${diffDays * penaltyPerDay} marks deducted`;
+      chipClass   = diffDays <= 3 ? 'warning' : 'late';
+      barColor    = diffDays <= 3 ? '#d97706' : '#dc2626';
+    }
+
+    const percent = (finalMark / maxMarks) * 100;
+    const lateDays = Math.max(0, diffDays);
+    const deducted = Math.min(maxMarks, lateDays * penaltyPerDay);
+
+    // Update UI
+    document.getElementById('statusChip').className = `status-chip ${chipClass}`;
+    document.getElementById('statusChip').textContent = statusText;
+    document.getElementById('barLabel').textContent = `${maxMarks} marks`;
+    document.getElementById('markBar').style.width = percent + '%';
+    document.getElementById('markBar').style.background = barColor;
+    document.getElementById('lateDays').textContent = lateDays;
+    document.getElementById('penalty-deducted').textContent = deducted;
+    document.getElementById('finalMark').textContent = finalMark;
+    document.getElementById('result').classList.add('show');
+
+    // Add to history
+    history.unshift({
+      due: dueVal,
+      sub: subVal,
+      days: lateDays,
+      mark: finalMark,
+      max: maxMarks,
+      late: lateDays > 0
+    });
+    renderHistory();
+  }
+
+  function renderHistory() {
+    if (history.length === 0) {
+      document.getElementById('historySection').style.display = 'none';
+      return;
+    }
+    document.getElementById('historySection').style.display = 'block';
+    const tbody = document.getElementById('historyBody');
+    tbody.innerHTML = history.map(h => `
+      <tr>
+        <td>${h.due}</td>
+        <td>${h.sub}</td>
+        <td>${h.days}</td>
+        <td><strong>${h.mark} / ${h.max}</strong></td>
+        <td>${h.late
+          ? `<span class="badge-late">Late</span>`
+          : `<span class="badge-ok">On Time</span>`}
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function clearHistory() {
+    history = [];
+    renderHistory();
+  }
+
+  // Set today as default submission date
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('subDate').value = today;
+</script>
+</body>
+</html>
